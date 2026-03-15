@@ -1,0 +1,13 @@
+project_id = "tpmocqykjhlwjzpvmtbg"
+
+[functions.dashboard]
+enabled = true
+verify_jwt = false
+import_map = "./functions/dashboard/deno.json"
+entrypoint = "./functions/dashboard/index.ts"
+
+[functions.predict]
+enabled = true
+verify_jwt = false
+import_map = "./functions/predict/deno.json"
+entrypoint = "./functions/predict/index.ts"

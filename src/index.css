@@ -1,0 +1,219 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* PV Fault Detection System - Industrial SCADA Design System */
+/* All colors in HSL - Minimal, Data-First, Engineering-Focused */
+
+
+@layer base {
+  :root {
+    /* Core palette - Industrial Light Theme */
+    --background: 210 20% 98%;
+    --foreground: 220 25% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 25% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 25% 10%;
+
+    /* Primary - Deep Teal (Industrial) */
+    --primary: 173 58% 26%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary - Cool Gray */
+    --secondary: 210 15% 93%;
+    --secondary-foreground: 220 25% 20%;
+
+    /* Muted - Subtle Gray */
+    --muted: 210 15% 95%;
+    --muted-foreground: 220 10% 45%;
+
+    /* Accent - Lighter Teal */
+    --accent: 173 45% 92%;
+    --accent-foreground: 173 58% 20%;
+
+    /* Status Colors */
+    --status-normal: 142 55% 40%;
+    --status-fault: 0 72% 51%;
+    --status-warning: 38 92% 50%;
+    
+    /* Chart Colors */
+    --chart-voltage: 210 90% 50%;
+    --chart-current: 142 60% 45%;
+    --chart-power: 38 92% 50%;
+    --chart-fault-zone: 0 72% 51%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 210 20% 88%;
+    --input: 210 20% 88%;
+    --ring: 173 58% 26%;
+
+    --radius: 0.25rem;
+
+    /* Sidebar - Slightly darker */
+    --sidebar-background: 210 20% 96%;
+    --sidebar-foreground: 220 25% 20%;
+    --sidebar-primary: 173 58% 26%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 173 45% 92%;
+    --sidebar-accent-foreground: 173 58% 20%;
+    --sidebar-border: 210 20% 90%;
+    --sidebar-ring: 173 58% 26%;
+
+    /* Typography */
+    --font-sans: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  }
+
+  .dark {
+    --background: 220 25% 8%;
+    --foreground: 210 20% 95%;
+
+    --card: 220 25% 10%;
+    --card-foreground: 210 20% 95%;
+
+    --popover: 220 25% 10%;
+    --popover-foreground: 210 20% 95%;
+
+    --primary: 173 50% 45%;
+    --primary-foreground: 220 25% 8%;
+
+    --secondary: 220 20% 18%;
+    --secondary-foreground: 210 20% 90%;
+
+    --muted: 220 20% 15%;
+    --muted-foreground: 210 15% 60%;
+
+    --accent: 173 40% 15%;
+    --accent-foreground: 173 50% 70%;
+
+    --status-normal: 142 55% 50%;
+    --status-fault: 0 72% 60%;
+    --status-warning: 38 92% 55%;
+
+    --destructive: 0 62% 40%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 20% 20%;
+    --input: 220 20% 20%;
+    --ring: 173 50% 45%;
+
+    --sidebar-background: 220 25% 6%;
+    --sidebar-foreground: 210 20% 90%;
+    --sidebar-primary: 173 50% 45%;
+    --sidebar-primary-foreground: 220 25% 8%;
+    --sidebar-accent: 173 40% 12%;
+    --sidebar-accent-foreground: 173 50% 70%;
+    --sidebar-border: 220 20% 15%;
+    --sidebar-ring: 173 50% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+  }
+
+  /* Data Display Typography */
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+
+  .data-value {
+    @apply font-mono text-lg font-semibold tracking-tight;
+  }
+
+  .data-label {
+    @apply text-xs font-medium uppercase tracking-wider text-muted-foreground;
+  }
+
+  /* Status Indicators */
+  .status-normal {
+    @apply text-status-normal;
+    color: hsl(var(--status-normal));
+  }
+
+  .status-fault {
+    @apply text-status-fault;
+    color: hsl(var(--status-fault));
+  }
+
+  .status-warning {
+    color: hsl(var(--status-warning));
+  }
+
+  /* Industrial Card Style */
+  .industrial-card {
+    @apply bg-card border border-border rounded-sm p-4;
+  }
+
+  /* Data Table Styling */
+  .data-table {
+    @apply w-full font-mono text-sm;
+  }
+
+  .data-table th {
+    @apply text-left text-xs font-medium uppercase tracking-wider text-muted-foreground py-3 px-4 border-b border-border bg-muted/50;
+  }
+
+  .data-table td {
+    @apply py-3 px-4 border-b border-border;
+  }
+
+  .data-table tr:hover {
+    @apply bg-muted/30;
+  }
+}
+
+@layer utilities {
+  /* Status badge utilities */
+  .badge-normal {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-sm;
+    background-color: hsl(var(--status-normal) / 0.1);
+    color: hsl(var(--status-normal));
+  }
+
+  .badge-fault {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-sm;
+    background-color: hsl(var(--status-fault) / 0.1);
+    color: hsl(var(--status-fault));
+  }
+
+  .badge-warning {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-sm;
+    background-color: hsl(var(--status-warning) / 0.1);
+    color: hsl(var(--status-warning));
+  }
+
+  /* Pulse indicator for live status */
+  .pulse-indicator {
+    @apply relative;
+  }
+
+  .pulse-indicator::before {
+    content: '';
+    @apply absolute inset-0 rounded-full;
+    animation: pulse-ring 2s ease-out infinite;
+  }
+
+  @keyframes pulse-ring {
+    0% {
+      transform: scale(1);
+      opacity: 0.5;
+    }
+    100% {
+      transform: scale(1.5);
+      opacity: 0;
+    }
+  }
+}
