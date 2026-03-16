@@ -12,7 +12,7 @@ app = FastAPI()
 # =============================
 # LOAD TRAINED ARTIFACTS
 # =============================
-model = load_model("saved/lstm_model.h5")
+model = load_model("saved/lstm_model.h5",compile=False)
 scaler = joblib.load("saved/scaler.pkl")
 encoder = joblib.load("saved/encoder.pkl")
 
