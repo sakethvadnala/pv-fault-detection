@@ -13,7 +13,7 @@ app = FastAPI()
 # LOAD TRAINED ARTIFACTS
 # =============================
 model = load_model("saved/lstm_model.h5")
-scaler = joblib.load("saved/scaler.pkl")ko
+scaler = joblib.load("saved/scaler.pkl")
 encoder = joblib.load("saved/encoder.pkl")
 
 
