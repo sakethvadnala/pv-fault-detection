@@ -8,6 +8,18 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+#<<<< CORS >>>>>
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://pv-fault-detection-frontend.onrender.com",
+        "http://localhost:5173",  # for local dev
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # =============================
 # LOAD TRAINED ARTIFACTS
