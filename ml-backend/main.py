@@ -99,15 +99,6 @@ def get_metrics():
         "labels": encoder.classes_.tolist()   # ⭐ ADD THIS
     }
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # or ["http://localhost:8080"]
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
 @app.post("/predict-live")
 def predict_live(data: PVInput):
 
