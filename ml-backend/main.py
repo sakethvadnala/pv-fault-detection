@@ -13,7 +13,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://pv-fault-detection-frontend.onrender.com",
-        "http://localhost:5173",  # for local dev
+        "http://localhost:5173",
+          "http://localhost:8080",  # for local dev
     ],
     allow_credentials=True,
     allow_methods=["*"],
