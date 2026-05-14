@@ -51,7 +51,7 @@ export interface SystemStatus {
 }
 
 /* =============================
-Run ML Prediction — NOW CALLS FASTAPI
+Helpers
 ============================= */
 
 function getSeverity(confidence: number): 'Low' | 'Medium' | 'High' | 'Critical' {
@@ -61,40 +61,38 @@ function getSeverity(confidence: number): 'Low' | 'Medium' | 'High' | 'Critical'
   return 'Low';
 }
 
+/* =============================
+Run ML Prediction — BATCH
+============================= */
+
 export async function runPrediction(
   data: Record<string, unknown>[],
   features: string[],
   datasetName?: string
 ): Promise<PredictionResponse> {
 
-  const results: PredictionResult[] = [];
+  const rows = data.map(row => ({
+    Voltage: row['Voltage'] ?? row['voltage'] ?? 0,
+    Current: row['Current'] ?? row['current'] ?? 0,
+    Power: row['Power'] ?? row['power'] ?? 0,
+    Irradiance: row['Irradiance'] ?? row['irradiance'] ?? 0,
+    Temperature: row['Temperature'] ?? row['temperature'] ?? 0,
+  }));
 
-  // Run prediction for each row of data
-  for (const row of data) {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/predict`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        Voltage: row['Voltage'] ?? row['voltage'] ?? 0,
-        Current: row['Current'] ?? row['current'] ?? 0,
-        Power: row['Power'] ?? row['power'] ?? 0,
-        Irradiance: row['Irradiance'] ?? row['irradiance'] ?? 0,
-        Temperature: row['Temperature'] ?? row['temperature'] ?? 0,
-      })
-    });
+  const res = await fetch(`${import.meta.env.VITE_API_URL}/predict-batch`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ rows })
+  });
 
-    if (!res.ok) {
-      throw new Error('Failed to run prediction');
-    }
+  if (!res.ok) throw new Error('Failed to run prediction');
 
-    const result = await res.json();
-    results.push({
-      faultType: result.fault,
-      probability: result.confidence
-    });
-  }
+  const json = await res.json();
+  const results: PredictionResult[] = json.results.map((r: any) => ({
+    faultType: r.fault,
+    probability: r.confidence
+  }));
 
-  // Find the most common fault as top prediction
   const topPrediction = results.reduce((a, b) =>
     a.probability > b.probability ? a : b
   );

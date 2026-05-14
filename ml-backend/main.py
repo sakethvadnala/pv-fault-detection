@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+from typing import List
 import numpy as np
 import joblib
 import pandas as pd
@@ -8,24 +9,26 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
-#<<<< CORS >>>>>
+
+# =============================
+# CORS
+# =============================
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://pv-fault-detection-frontend.onrender.com",
         "http://localhost:5173",
-          "http://localhost:8080",  # for local dev
+        "http://localhost:8080",
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
 # =============================
 # LOAD TRAINED ARTIFACTS
 # =============================
-model = load_model("saved/lstm_model.h5",compile=False)
+model = load_model("saved/lstm_model.h5", compile=False)
 scaler = joblib.load("saved/scaler.pkl")
 encoder = joblib.load("saved/encoder.pkl")
 
@@ -40,9 +43,12 @@ class PVInput(BaseModel):
     Irradiance: float
     Temperature: float
 
+class PVBatch(BaseModel):
+    rows: List[PVInput]
+
 
 # =============================
-# PREDICTION ENDPOINT
+# SINGLE PREDICTION ENDPOINT
 # =============================
 @app.post("/predict")
 def predict(data: PVInput):
@@ -70,7 +76,35 @@ def predict(data: PVInput):
 
 
 # =============================
-# METRICS ENDPOINT  ⭐ NEW
+# BATCH PREDICTION ENDPOINT
+# =============================
+@app.post("/predict-batch")
+def predict_batch(data: PVBatch):
+    if not data.rows:
+        return {"results": []}
+
+    values = np.array([[
+        r.Voltage, r.Current, r.Power, r.Irradiance, r.Temperature
+    ] for r in data.rows])
+
+    values = scaler.transform(values)
+    values = values.reshape((values.shape[0], 1, 5))
+
+    probs = model.predict(values)
+    indices = np.argmax(probs, axis=1)
+    faults = encoder.inverse_transform(indices)
+    confidences = probs[np.arange(len(indices)), indices]
+
+    return {
+        "results": [
+            {"fault": str(faults[i]), "confidence": float(confidences[i])}
+            for i in range(len(faults))
+        ]
+    }
+
+
+# =============================
+# METRICS ENDPOINT
 # =============================
 @app.get("/metrics")
 def get_metrics():
@@ -97,12 +131,15 @@ def get_metrics():
         "recall": float(rec),
         "f1": float(f1),
         "confusion_matrix": cm,
-        "labels": encoder.classes_.tolist()   # ⭐ ADD THIS
+        "labels": encoder.classes_.tolist()
     }
 
+
+# =============================
+# LIVE PREDICTION ENDPOINT
+# =============================
 @app.post("/predict-live")
 def predict_live(data: PVInput):
-
     values = np.array([[
         data.Voltage,
         data.Current,
