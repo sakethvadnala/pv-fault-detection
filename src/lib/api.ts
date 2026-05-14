@@ -88,14 +88,27 @@ export async function runPrediction(
   if (!res.ok) throw new Error('Failed to run prediction');
 
   const json = await res.json();
-  const results: PredictionResult[] = json.results.map((r: any) => ({
-    faultType: r.fault,
-    probability: r.confidence
+
+  // Aggregate: count each fault type and average confidence
+  const aggregated: Record<string, { total: number; count: number }> = {};
+  for (const r of json.results) {
+    if (!aggregated[r.fault]) {
+      aggregated[r.fault] = { total: 0, count: 0 };
+    }
+    aggregated[r.fault].total += r.confidence;
+    aggregated[r.fault].count += 1;
+  }
+
+  // Convert to predictions array with average confidence per fault type
+  const results: PredictionResult[] = Object.entries(aggregated).map(([fault, val]) => ({
+    faultType: fault,
+    probability: val.total / val.count
   }));
 
-  const topPrediction = results.reduce((a, b) =>
-    a.probability > b.probability ? a : b
-  );
+  // Sort by probability descending
+  results.sort((a, b) => b.probability - a.probability);
+
+  const topPrediction = results[0];
 
   return {
     predictions: results,
