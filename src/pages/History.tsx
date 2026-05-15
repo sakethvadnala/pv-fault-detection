@@ -40,26 +40,37 @@ export default function History() {
   }, [records, currentPage]);
 
   // =========================
-  // SEVERITY FROM CONFIDENCE
-  // =========================
-  const getSeverity = (conf: number) => {
-    if (conf > 0.9) return "Critical";
-    if (conf > 0.75) return "High";
-    if (conf > 0.5) return "Medium";
-    return "Low";
-  };
+// SEVERITY LOGIC (Fixed)
+// =========================
+const getSeverity = (faultType: string, confidence: number) => {
+  const normalized = faultType?.trim().toLowerCase() || '';
 
-  const getSeverityClass = (severity: string) => {
-    switch (severity) {
-      case "Critical":
-      case "High":
-        return "badge-fault";
-      case "Medium":
-        return "badge-warning";
-      default:
-        return "badge-normal";
-    }
-  };
+  // Normal should ALWAYS be Low
+  if (normalized === 'normal' || normalized.includes('normal')) {
+    return 'Low';
+  }
+
+  // For actual faults
+  if (confidence > 0.9) return 'Critical';
+  if (confidence > 0.75) return 'High';
+  if (confidence > 0.5) return 'Medium';
+  return 'Low';
+};
+
+const getSeverityClass = (severity: string) => {
+  switch (severity) {
+    case "Critical":
+      return "badge-fault";        // red
+    case "High":
+      return "badge-fault";        // or make it orange if you prefer
+    case "Medium":
+      return "badge-warning";
+    case "Low":
+      return "badge-normal";
+    default:
+      return "badge-normal";
+  }
+};
 
   const formatTimestamp = (timestamp: string) => {
     return new Date(timestamp).toLocaleString("en-US", {
@@ -94,30 +105,31 @@ export default function History() {
             </thead>
             <tbody>
               {paginatedRecords.map((r) => {
-                const conf =
-                  r.probabilities?.[r.predicted_fault] ?? 0;
-                const severity = getSeverity(conf);
+  const faultType = r.predicted_fault || 'Normal';
+  const conf = r.probabilities?.[faultType] ?? r.probabilities?.[Object.keys(r.probabilities || {})[0]] ?? 0;
+  
+  const severity = getSeverity(faultType, conf);
 
-                return (
-                  <tr key={r.id}>
-                    <td className="text-muted-foreground">
-                      {r.id.slice(0, 8)}
-                    </td>
-                    <td>{formatTimestamp(r.timestamp)}</td>
-                    <td className="font-medium">
-                      {r.predicted_fault}
-                    </td>
-                    <td>
-                      <span className={getSeverityClass(severity)}>
-                        {severity}
-                      </span>
-                    </td>
-                    <td className="font-mono">
-                      {(conf * 100).toFixed(1)}%
-                    </td>
-                  </tr>
-                );
-              })}
+  return (
+    <tr key={r.id}>
+      <td className="text-muted-foreground">
+        {r.id.slice(0, 8)}
+      </td>
+      <td>{formatTimestamp(r.timestamp)}</td>
+      <td className="font-medium">
+        {faultType}
+      </td>
+      <td>
+        <span className={getSeverityClass(severity)}>
+          {severity}
+        </span>
+      </td>
+      <td className="font-mono">
+        {(conf * 100).toFixed(1)}%
+      </td>
+    </tr>
+  );
+})}
             </tbody>
           </table>
         </div>
