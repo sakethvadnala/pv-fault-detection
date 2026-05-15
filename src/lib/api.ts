@@ -89,31 +89,63 @@ export async function runPrediction(
 
   const json = await res.json();
 
-  // Aggregate: count each fault type and average confidence
+  // Aggregate by fault type
   const aggregated: Record<string, { total: number; count: number }> = {};
   for (const r of json.results) {
-    if (!aggregated[r.fault]) {
-      aggregated[r.fault] = { total: 0, count: 0 };
-    }
+    if (!aggregated[r.fault]) aggregated[r.fault] = { total: 0, count: 0 };
     aggregated[r.fault].total += r.confidence;
     aggregated[r.fault].count += 1;
   }
 
-  // Convert to predictions array with average confidence per fault type
   const results: PredictionResult[] = Object.entries(aggregated).map(([fault, val]) => ({
     faultType: fault,
     probability: val.total / val.count
   }));
 
-  // Sort by probability descending
   results.sort((a, b) => b.probability - a.probability);
-
   const topPrediction = results[0];
+  const severity = getSeverity(topPrediction.probability);
+
+  // ✅ Save to Supabase predictions table
+  const { error: predError } = await supabase.from('predictions').insert({
+    timestamp: new Date().toISOString(),
+    predicted_fault: topPrediction.faultType,
+    probabilities: Object.fromEntries(results.map(r => [r.faultType, r.probability])),
+    dataset_name: datasetName || null,
+    features_used: features,
+  });
+
+  if (predError) console.error('Failed to save prediction:', predError);
+
+  // ✅ Save to fault_history table
+  const { error: histError } = await supabase.from('fault_history').insert({
+    timestamp: new Date().toISOString(),
+    fault_type: topPrediction.faultType,
+    severity,
+    confidence: topPrediction.probability,
+    dataset_name: datasetName || null,
+    features_used: features,
+  });
+
+  if (histError) console.error('Failed to save fault history:', histError);
+
+  // ✅ Update system_status
+  const { error: statusError } = await supabase
+    .from('system_status')
+    .upsert({
+      id: '00000000-0000-0000-0000-000000000001',
+      status: topPrediction.faultType === 'Normal' ? 'Normal' : 'Fault',
+      current_fault: topPrediction.faultType,
+      confidence: topPrediction.probability,
+      last_updated: new Date().toISOString(),
+    });
+
+  if (statusError) console.error('Failed to update system status:', statusError);
 
   return {
     predictions: results,
     topPrediction,
-    severity: getSeverity(topPrediction.probability),
+    severity,
     timestamp: new Date().toISOString()
   };
 }
