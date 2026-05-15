@@ -53,12 +53,19 @@ export interface SystemStatus {
 /* =============================
 Helpers
 ============================= */
+function getSeverity(
+  confidence: number,
+  faultType: string
+): 'Low' | 'Medium' | 'High' | 'Critical' {
 
-function getSeverity(confidence: number, faultType: string): 'Low' | 'Medium' | 'High' | 'Critical' {
-  if (faultType === 'Normal') return 'Low';
+  const normalizedFault = faultType.trim().toLowerCase();
+
+  if (normalizedFault === 'normal') return 'Low';
+
   if (confidence > 0.9) return 'Critical';
   if (confidence > 0.75) return 'High';
   if (confidence > 0.5) return 'Medium';
+
   return 'Low';
 }
 
