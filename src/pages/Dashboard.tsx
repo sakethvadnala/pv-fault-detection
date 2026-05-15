@@ -57,7 +57,7 @@ export default function Dashboard() {
         </span>
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
+<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
 
         <StatusCard
           label="System Status"
@@ -103,7 +103,8 @@ export default function Dashboard() {
           showFaultZone={true}
         />
 
-        <div className="grid grid-cols-2 gap-4">
+        
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
           <TimeSeriesChart
             data={timeSeriesData}
@@ -133,7 +134,7 @@ export default function Dashboard() {
 
         {timeSeriesData.length > 0 && (
 
-          <div className="grid grid-cols-5 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
 
             <div>
               <p className="data-label">Voltage</p>

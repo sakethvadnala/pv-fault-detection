@@ -44,7 +44,7 @@ export default function ModelInfo() {
       {/* Model Overview */}
       <div className="industrial-card">
         <h3 className="text-sm font-medium mb-4">Model Overview</h3>
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div>
             <p className="data-label">Model Name</p>
             <p className="text-base font-medium mt-1">{modelInfo.name}</p>
@@ -87,7 +87,7 @@ export default function ModelInfo() {
       {/* Performance Metrics */}
       <div>
         <h3 className="text-sm font-medium mb-4">Performance Metrics</h3>
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatusCard
             label="Accuracy"
             value={formatPercentage(metrics?.accuracy)}
