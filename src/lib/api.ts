@@ -55,7 +55,7 @@ Helpers
 ============================= */
 
 function getSeverity(confidence: number, faultType: string): 'Low' | 'Medium' | 'High' | 'Critical' {
-  if(faultType === 'Normal') return 'Low';
+  if (faultType === 'Normal') return 'Low';
   if (confidence > 0.9) return 'Critical';
   if (confidence > 0.75) return 'High';
   if (confidence > 0.5) return 'Medium';
@@ -90,7 +90,6 @@ export async function runPrediction(
 
   const json = await res.json();
 
-  // Aggregate by fault type
   const aggregated: Record<string, { total: number; count: number }> = {};
   for (const r of json.results) {
     if (!aggregated[r.fault]) aggregated[r.fault] = { total: 0, count: 0 };
@@ -105,17 +104,21 @@ export async function runPrediction(
 
   results.sort((a, b) => b.probability - a.probability);
   const topPrediction = results[0];
-  const severity = getSeverity(topPrediction.probability,topPrediction.faultType);
+  const severity = getSeverity(topPrediction.probability, topPrediction.faultType);
 
-  // ✅ Save to Supabase predictions table
+  // ✅ Get current user
+  const { data: { user } } = await supabase.auth.getUser();
+  const userId = user?.id;
+
+  // ✅ Save to predictions table
   const { error: predError } = await supabase.from('predictions').insert({
     timestamp: new Date().toISOString(),
     predicted_fault: topPrediction.faultType,
     probabilities: Object.fromEntries(results.map(r => [r.faultType, r.probability])),
     dataset_name: datasetName || null,
     features_used: features,
+    user_id: userId,
   });
-
   if (predError) console.error('Failed to save prediction:', predError);
 
   // ✅ Save to fault_history table
@@ -126,21 +129,21 @@ export async function runPrediction(
     confidence: topPrediction.probability,
     dataset_name: datasetName || null,
     features_used: features,
+    user_id: userId,
   });
-
   if (histError) console.error('Failed to save fault history:', histError);
 
-  // ✅ Update system_status
+  // ✅ Update system_status — per user, use user id as row id
   const { error: statusError } = await supabase
     .from('system_status')
     .upsert({
-      id: '00000000-0000-0000-0000-000000000001',
+      id: userId ?? '00000000-0000-0000-0000-000000000001',
       status: topPrediction.faultType === 'Normal' ? 'Normal' : 'Fault',
       current_fault: topPrediction.faultType,
       confidence: topPrediction.probability,
       last_updated: new Date().toISOString(),
+      user_id: userId,
     });
-
   if (statusError) console.error('Failed to update system status:', statusError);
 
   return {
@@ -261,10 +264,6 @@ export interface ModelMetrics {
 
 export async function fetchModelMetrics(): Promise<ModelMetrics> {
   const res = await fetch(`${import.meta.env.VITE_API_URL}/metrics`);
-
-  if (!res.ok) {
-    throw new Error('Failed to fetch model metrics');
-  }
-
+  if (!res.ok) throw new Error('Failed to fetch model metrics');
   return res.json();
 }

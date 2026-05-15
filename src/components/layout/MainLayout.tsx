@@ -3,6 +3,9 @@ import { TopBar } from './TopBar';
 import { Sidebar } from './Sidebar';
 import { SystemStatus, FaultType } from '@/types/pv-system';
 import { Zap } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { User } from '@supabase/supabase-js';
+import Login from '@/pages/Login';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -11,6 +14,7 @@ interface MainLayoutProps {
 export function MainLayout({ children }: MainLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
   const [systemState, setSystemState] = useState({
     status: 'Normal' as SystemStatus,
     currentFault: 'Normal' as FaultType,
@@ -19,8 +23,18 @@ export function MainLayout({ children }: MainLayoutProps) {
   });
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 2000);
-    return () => clearTimeout(timer);
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -30,6 +44,7 @@ export function MainLayout({ children }: MainLayoutProps) {
     return () => clearInterval(interval);
   }, []);
 
+  // Show loading spinner
   if (loading) {
     return (
       <div className="fixed inset-0 bg-background flex flex-col items-center justify-center z-50">
@@ -48,11 +63,8 @@ export function MainLayout({ children }: MainLayoutProps) {
           </div>
           <div className="flex gap-1">
             {[0, 1, 2].map(i => (
-              <div
-                key={i}
-                className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce"
-                style={{ animationDelay: `${i * 0.15}s` }}
-              />
+              <div key={i} className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce"
+                style={{ animationDelay: `${i * 0.15}s` }} />
             ))}
           </div>
         </div>
@@ -60,12 +72,16 @@ export function MainLayout({ children }: MainLayoutProps) {
     );
   }
 
+  // Show login if not authenticated
+  if (!user) return <Login />;
+
   return (
     <div className="min-h-screen bg-background">
       <TopBar
         status={systemState.status}
         lastUpdated={systemState.lastUpdated}
         onMenuToggle={() => setSidebarOpen(prev => !prev)}
+        user={user}
       />
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <main className="md:ml-56 pt-14 min-h-screen">
