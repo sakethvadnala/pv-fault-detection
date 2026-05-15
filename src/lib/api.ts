@@ -54,7 +54,8 @@ export interface SystemStatus {
 Helpers
 ============================= */
 
-function getSeverity(confidence: number): 'Low' | 'Medium' | 'High' | 'Critical' {
+function getSeverity(confidence: number, faultType: string): 'Low' | 'Medium' | 'High' | 'Critical' {
+  if(faultType === 'Normal') return 'Low';
   if (confidence > 0.9) return 'Critical';
   if (confidence > 0.75) return 'High';
   if (confidence > 0.5) return 'Medium';
@@ -104,7 +105,7 @@ export async function runPrediction(
 
   results.sort((a, b) => b.probability - a.probability);
   const topPrediction = results[0];
-  const severity = getSeverity(topPrediction.probability);
+  const severity = getSeverity(topPrediction.probability,topPrediction.faultType);
 
   // ✅ Save to Supabase predictions table
   const { error: predError } = await supabase.from('predictions').insert({
