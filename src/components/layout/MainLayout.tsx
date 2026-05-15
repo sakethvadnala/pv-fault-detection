@@ -26,7 +26,9 @@ export function MainLayout({ children }: MainLayoutProps) {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      setLoading(false);
+      setTimeout(() => {
+        setLoading(false);
+      }, 3000); // 3 seconds]
     });
 
     // Listen for auth changes
