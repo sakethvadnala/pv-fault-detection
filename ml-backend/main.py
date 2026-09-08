@@ -4,6 +4,7 @@ from typing import List
 import numpy as np
 import joblib
 import pandas as pd
+from preprocessing import map_pv_features
 from tensorflow.keras.models import load_model
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 from fastapi.middleware.cors import CORSMiddleware
@@ -44,7 +45,7 @@ class PVInput(BaseModel):
     Temperature: float
 
 class PVBatch(BaseModel):
-    rows: List[PVInput]
+    rows: List[dict]
 
 
 # =============================
@@ -83,23 +84,77 @@ def predict_batch(data: PVBatch):
     if not data.rows:
         return {"results": []}
 
-    values = np.array([[
-        r.Voltage, r.Current, r.Power, r.Irradiance, r.Temperature
-    ] for r in data.rows])
+    # Convert uploaded rows into DataFrame
+    df = pd.DataFrame(data.rows)
 
-    values = scaler.transform(values)
+    # Automatically map uploaded columns to model features
+    X, mapping, ignored_columns, missing_features = map_pv_features(df)
+
+    # Handle missing features
+    warnings = []
+
+    if "Power" in missing_features:
+        if "Voltage" in X.columns and "Current" in X.columns:
+            X["Power"] = X["Voltage"] * X["Current"]
+
+            missing_features.remove("Power")
+            mapping["Power"] = "Derived from Voltage × Current"
+
+            warnings.append(
+                "Power was not found in the uploaded data. "
+                "Power was calculated as Voltage × Current."
+            )
+
+    # Make sure correct feature order is used
+    X = X[[
+        "Voltage",
+        "Current",
+        "Power",
+        "Irradiance",
+        "Temperature"
+    ]]
+
+    # Convert everything to numbers
+    X = X.apply(pd.to_numeric, errors="coerce")
+
+    # Handle invalid/missing values inside existing columns
+    train_df = pd.read_csv("data/train.csv")
+
+    for feature in X.columns:
+        X[feature] = X[feature].fillna(train_df[feature].median())
+
+
+
+    # Scale
+    values = scaler.transform(X.values)
+
+
+    # LSTM input shape
     values = values.reshape((values.shape[0], 1, 5))
 
-    probs = model.predict(values)
+    # Prediction
+    probs = model.predict(values, verbose=0)
+    print("\n=== PREDICTION PROBABILITIES ===")
+    print(probs[:10])
+
+    print("\n=== PREDICTED CLASSES ===")
+    print(encoder.inverse_transform(np.argmax(probs, axis=1)))
     indices = np.argmax(probs, axis=1)
     faults = encoder.inverse_transform(indices)
     confidences = probs[np.arange(len(indices)), indices]
 
     return {
         "results": [
-            {"fault": str(faults[i]), "confidence": float(confidences[i])}
+            {
+                "fault": str(faults[i]),
+                "confidence": float(confidences[i])
+            }
             for i in range(len(faults))
-        ]
+        ],
+        "mapping": mapping,
+        "ignored_columns": ignored_columns,
+        "missing_features": missing_features,
+        "warnings": warnings
     }
 
 

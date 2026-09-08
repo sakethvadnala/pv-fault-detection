@@ -79,13 +79,14 @@ export async function runPrediction(
   datasetName?: string
 ): Promise<PredictionResponse> {
 
-  const rows = data.map(row => ({
-    Voltage: row['Voltage'] ?? row['voltage'] ?? 0,
-    Current: row['Current'] ?? row['current'] ?? 0,
-    Power: row['Power'] ?? row['power'] ?? 0,
-    Irradiance: row['Irradiance'] ?? row['irradiance'] ?? 0,
-    Temperature: row['Temperature'] ?? row['temperature'] ?? 0,
-  }));
+  // const rows = data.map(row => ({
+  //   Voltage: row['Voltage'] ?? row['voltage'] ?? 0,
+  //   Current: row['Current'] ?? row['current'] ?? 0,
+  //   Power: row['Power'] ?? row['power'] ?? 0,
+  //   Irradiance: row['Irradiance'] ?? row['irradiance'] ?? 0,
+  //   Temperature: row['Temperature'] ?? row['temperature'] ?? 0,
+  // }));
+  const rows = data;
 
   const res = await fetch(`${import.meta.env.VITE_API_URL}/predict-batch`, {
     method: 'POST',
