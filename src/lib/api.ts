@@ -214,7 +214,7 @@ export async function getSystemStatus(): Promise<SystemStatus> {
 
   return {
     id: data.id,
-    status: data.status,
+    status: data.status as 'Normal' | 'Fault' | 'Warning',
     current_fault: data.current_fault,
     confidence: Number(data.confidence),
     last_updated: data.last_updated
