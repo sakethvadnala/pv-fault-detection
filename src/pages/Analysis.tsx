@@ -100,6 +100,7 @@ export default function Analysis() {
     setDataset(null);
     setPredictionResults(null);
     setSelectedFeatures(['Voltage', 'Current', 'Power']);
+    sessionStorage.removeItem('pv_active_dataset_id');
   };
 
   return (
