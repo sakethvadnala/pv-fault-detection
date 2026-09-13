@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { StatusCard } from "@/components/dashboard/StatusCard";
 import { TimeSeriesChart } from "@/components/dashboard/TimeSeriesChart";
+import { Button } from "@/components/ui/button";
 import {
   fetchPVTimeSeries,
   getSystemStatus,
@@ -8,7 +10,10 @@ import {
 } from "@/lib/api";
 import { PVDataPoint } from "@/types/pv-system";
 
+
 export default function Dashboard() {
+  const navigate = useNavigate();
+
   const [timeSeriesData, setTimeSeriesData] =
     useState<PVDataPoint[]>([]);
 
@@ -178,9 +183,30 @@ export default function Dashboard() {
    * completely hide the System Overview.
    */
   if (!activeDatasetId) {
-    return null;
-  }
+  return (
+    <div className="flex min-h-[60vh] items-center justify-center">
+      <div className="text-center max-w-md px-6">
+        <div className="industrial-card p-8">
+          <h2 className="text-xl font-semibold mb-2">
+            No Analysis Available
+          </h2>
 
+          <p className="text-sm text-muted-foreground mb-6">
+            Upload and analyze a PV dataset to view
+            your system results, fault detection,
+            and performance graphs.
+          </p>
+
+          <Button
+            onClick={() => navigate("/analysis")}
+          >
+            Upload Dataset
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
   /* =========================
   DISPLAY VALUES
   ========================= */
