@@ -19,7 +19,7 @@ export default function ModelInfo() {
     name: "PV Fault LSTM Classifier",
     version: "v2.0",
     framework: "TensorFlow / Keras",
-    lastTrained: new Date().toISOString(),
+    lastTrained:  "2026-08-20",
     architecture: "LSTM (5 features → N classes)",
     trainingDataset: "PV 12-month labeled dataset",
     inputFeatures: [
